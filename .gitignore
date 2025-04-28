@@ -2,5 +2,4 @@
 build/
 .env
 
-package-lock.json
 *.json
