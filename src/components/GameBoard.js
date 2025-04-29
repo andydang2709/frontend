@@ -79,11 +79,14 @@ function GameBoard() {
           {gameData.players.map((player, idx) => (
             <div key={idx}>
               <h3>
-                {player.name} ({player.bb} BB) {player.folded ? "(Folded)" : ""}
+                {player.name} ({player.bb} BB)
+                {player.is_small_blind && " 🟡 Small Blind"}
+                {player.is_big_blind && " 🔵 Big Blind"}
+                {player.folded ? " (Folded)" : ""}
               </h3>
               <p>Hand: {player.hand.join(', ')}</p>
 
-              {/* Only show action buttons if it's this player's turn and not folded and game not ended */}
+              {/* Action buttons */}
               {gameData.current_turn === player.name && !player.folded && !gameEnded && (
                 <div style={{ marginBottom: '10px' }}>
                   <button onClick={() => playerAction(player.name, 'call')}>Call</button>
@@ -96,6 +99,7 @@ function GameBoard() {
               )}
             </div>
           ))}
+
 
           <h2>Community Cards:</h2>
           <p>{gameData.community_cards.join(', ')}</p>
@@ -110,11 +114,13 @@ function GameBoard() {
           <p><strong>Board:</strong> {showdownData.board.join(', ')}</p>
 
           <h3>Player Hands:</h3>
-          {showdownData.results.map((res, idx) => (
-            <div key={idx}>
-              <p><strong>{res.name}</strong>: {res.hand.join(', ')} — {res.hand_name}</p>
-            </div>
-          ))}
+            {showdownData.results.map((res, idx) => (
+              <div key={idx}>
+                <p>
+                  <strong>{res.name}</strong>: {res.hand.join(', ')} — <i>{res.hand_name}</i>
+                </p>
+              </div>
+            ))}
 
           <h3 style={{ color: 'green' }}>
             Winner(s): {showdownData.winners.join(', ')}
