@@ -2,7 +2,7 @@
   "name": "poker-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://andydang2709.github.io/poker-frontend",
+  "homepage": "https://andydang2709.github.io/poker-machine",
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
