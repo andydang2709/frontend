@@ -22,7 +22,7 @@ function getCardImage(cardStr) {
   const fileRank = rankMap[rank] || rank;
   const fileSuit = suitMap[suit];
 
-  return `/cards/${fileRank}_of_${fileSuit}.png`;  // adjust path as needed
+  return `/cards/${fileRank}_of_${fileSuit}.png`;
 }
 
 function GameBoard() {
@@ -119,21 +119,21 @@ function GameBoard() {
                     {player.is_big_blind && <span style={{ marginLeft: '10px', color: '#2980b9' }}>🔵 Big Blind</span>}
                     {player.folded && <span style={{ marginLeft: '10px', color: '#aaa' }}>(Folded)</span>}
                   </h3>
-                  <div style={{ display: 'flex', gap: '8px', margin: '5px 0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', margin: '5px 0' }}>
                     {player.hand.map((card, idx) => (
                       <img key={idx} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />
                     ))}
                   </div>
 
                   {isCurrentTurn && (
-                    <div style={{ marginTop: '10px' }}>
-                      <button onClick={() => playerAction(player.name, 'call')} style={{ marginRight: '10px' }}>
+                    <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                      <button onClick={() => playerAction(player.name, 'call')}>
                         Call
                       </button>
                       <button onClick={() => {
                         const amount = prompt('Enter bet amount (in BB):');
                         if (amount) playerAction(player.name, 'bet', parseFloat(amount));
-                      }} style={{ marginRight: '10px' }}>
+                      }}>
                         Bet
                       </button>
                       <button onClick={() => playerAction(player.name, 'fold')} style={{ color: 'red' }}>
@@ -147,21 +147,16 @@ function GameBoard() {
           </div>
 
           <div style={{ marginTop: '30px' }}>
-            <h2>Community Cards</h2>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              {gameData.community_cards.length === 0 ? (
-                <p style={{ fontSize: '18px' }}>None yet</p>
-              ) : (
-                gameData.community_cards.map((card, idx) => (
-                  <img key={idx} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />
-                ))
-              )}
+            <h2 style={{ textAlign: 'center' }}>Community Cards</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+              {gameData.community_cards.map((card, idx) => (
+                <img key={idx} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* ✅ Showdown Screen */}
       {showdownData && (
         <div style={{
           marginTop: '40px',
@@ -170,33 +165,51 @@ function GameBoard() {
           borderRadius: '12px',
           backgroundColor: '#fdfdfd'
         }}>
-          <h2 style={{ color: '#b30000' }}>🏆 Final Showdown</h2>
+          <h2 style={{ color: '#b30000', textAlign: 'center' }}>🏆 Final Showdown</h2>
 
-          <p><strong>Board:</strong> {showdownData.board.join(', ')}</p>
+          <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+            <strong>Board:</strong>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
+              {showdownData.board.map((card, idx) => (
+                <img
+                  key={idx}
+                  src={getCardImage(card)}
+                  alt={card}
+                  style={{ width: '60px', height: '90px' }}
+                />
+              ))}
+            </div>
+          </div>
 
-          <h3>Player Hands</h3>
+          <h3 style={{ textAlign: 'center' }}>Player Hands</h3>
           {showdownData.results.map((res, idx) => (
-            <div key={idx} style={{ marginBottom: '10px' }}>
-              <strong>{res.name}</strong>: 
-              <div style={{ display: 'flex', gap: '8px', margin: '5px 0' }}>
-                {res.hand.map((card, i) => (
-                  <img key={i} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />
+            <div key={idx} style={{ marginBottom: '15px', textAlign: 'center' }}>
+              <strong>{res.name}</strong>: <i>{res.hand_name}</i>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '8px' }}>
+                {res.hand.map((card, cidx) => (
+                  <img
+                    key={cidx}
+                    src={getCardImage(card)}
+                    alt={card}
+                    style={{ width: '60px', height: '90px' }}
+                  />
                 ))}
               </div>
-              <i>{res.hand_name}</i>
             </div>
           ))}
 
-          <h3 style={{ color: 'green', marginTop: '20px' }}>
+          <h3 style={{ color: 'green', marginTop: '20px', textAlign: 'center' }}>
             Winner(s): {showdownData.winners.join(', ')}
           </h3>
 
-          <button
-            onClick={nextHand}
-            style={{ marginTop: '20px', padding: '12px 20px', backgroundColor: '#4CAF50', color: 'white', fontWeight: 'bold', borderRadius: '8px' }}
-          >
-            ➡️ Start Next Hand
-          </button>
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={nextHand}
+              style={{ marginTop: '20px', padding: '12px 20px', backgroundColor: '#4CAF50', color: 'white', fontWeight: 'bold', borderRadius: '8px' }}
+            >
+              ➡️ Start Next Hand
+            </button>
+          </div>
         </div>
       )}
     </div>
