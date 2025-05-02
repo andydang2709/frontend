@@ -22,7 +22,7 @@ function getCardImage(cardStr) {
   const fileRank = rankMap[rank] || rank;
   const fileSuit = suitMap[suit];
 
-  return `/cards/${fileRank}_of_${fileSuit}.png`;
+  return `${process.env.PUBLIC_URL}/cards/${fileRank}_of_${fileSuit}.png`;
 }
 
 function GameBoard() {
