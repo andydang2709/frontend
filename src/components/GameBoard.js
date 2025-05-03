@@ -133,7 +133,15 @@ function GameBoard() {
                       </button>
                       <button onClick={() => {
                         const amount = prompt('Enter bet amount (in BB):');
-                        if (amount) playerAction(player.name, 'bet', parseFloat(amount));
+                        if (amount) {
+                          const numAmount = parseFloat(amount);
+                          if (numAmount <= 0) {
+                            alert("❌ You cannot bet 0 or less BB.");
+                            return;
+                          }
+                          playerAction(player.name, 'bet', numAmount);
+                        }
+                        
                       }}>
                         Bet
                       </button>
