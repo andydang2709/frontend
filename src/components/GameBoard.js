@@ -33,7 +33,7 @@ function GameBoard() {
   async function fetchGameState() {
     try {
       // const response = await axios.get('http://localhost:8000/state');
-      const response = await axios.get('https://36887339-d7f2-4fa5-811d-8efc739f30b1-00-129wf48ekoc7.kirk.replit.dev/state');
+      const response = await axios.get('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/state');
       setGameData(response.data);
     } catch (error) {
       console.error('Error fetching game state:', error);
@@ -42,7 +42,7 @@ function GameBoard() {
 
   async function startGame() {
     try {
-      await axios.get('https://36887339-d7f2-4fa5-811d-8efc739f30b1-00-129wf48ekoc7.kirk.replit.dev/start');
+      await axios.get('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/start');
       setShowdownData(null);
       setGameEnded(false);
       await fetchGameState();
@@ -53,7 +53,7 @@ function GameBoard() {
 
   async function playerAction(name, action, amount = 0) {
     try {
-      const response = await axios.post('https://36887339-d7f2-4fa5-811d-8efc739f30b1-00-129wf48ekoc7.kirk.replit.dev/action', null, {
+      const response = await axios.post('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/action', null, {
         params: { name, action, amount }
       });
 
@@ -69,7 +69,7 @@ function GameBoard() {
 
   async function triggerShowdown() {
     try {
-      const response = await axios.get('https://36887339-d7f2-4fa5-811d-8efc739f30b1-00-129wf48ekoc7.kirk.replit.dev/showdown');
+      const response = await axios.get('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/showdown');
       setShowdownData(response.data);
       setGameEnded(true);
     } catch (error) {
@@ -79,7 +79,7 @@ function GameBoard() {
 
   async function nextHand() {
     try {
-      await axios.get('https://36887339-d7f2-4fa5-811d-8efc739f30b1-00-129wf48ekoc7.kirk.replit.dev/next_hand');
+      await axios.get('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/next_hand');
       setShowdownData(null);
       setGameEnded(false);
       await fetchGameState();
