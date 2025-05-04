@@ -129,7 +129,7 @@ function GameBoard() {
                   {isCurrentTurn && (
                     <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
                       <button onClick={() => playerAction(player.name, 'call')}>
-                        Call
+                        Call/Check
                       </button>
                       <button onClick={() => {
                         const amount = prompt('Enter bet amount (in BB):');
