@@ -21,7 +21,8 @@ function GameBoard() {
   const [showdownData, setShowdownData] = useState(null);
   const [gameEnded, setGameEnded] = useState(false);
 
-  const BASE_URL = 'https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev';
+  // const BASE_URL = 'https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev';
+  const BASE_URL = 'http://127.0.0.1:8000';
 
   const fetchGameState = async () => {
     try {
