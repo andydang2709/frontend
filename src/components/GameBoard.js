@@ -1,153 +1,196 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
 function getCardImage(cardStr) {
-  const rankMap = {
-    'J': 'jack',
-    'Q': 'queen',
-    'K': 'king',
-    'A': 'ace'
-  };
-
-  const suitMap = {
-    '♠': 'spades',
-    '♣': 'clubs',
-    '♥': 'hearts',
-    '♦': 'diamonds'
-  };
-
+  const rankMap = { J: 'jack', Q: 'queen', K: 'king', A: 'ace' };
+  const suitMap = { '♠': 'spades', '♣': 'clubs', '♥': 'hearts', '♦': 'diamonds' };
   const rank = cardStr.slice(0, -1);
   const suit = cardStr.slice(-1);
-
   const fileRank = rankMap[rank] || rank;
   const fileSuit = suitMap[suit];
-
   return `${process.env.PUBLIC_URL}/cards/${fileRank}_of_${fileSuit}.png`;
 }
 
 function GameBoard() {
+  const [setupMode, setSetupMode] = useState(true);
+  const [playerCount, setPlayerCount] = useState(2);
+  const [playerNames, setPlayerNames] = useState(Array(2).fill(''));
   const [gameData, setGameData] = useState(null);
   const [showdownData, setShowdownData] = useState(null);
   const [gameEnded, setGameEnded] = useState(false);
 
-  async function fetchGameState() {
+  const BASE_URL = 'https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev';
+
+  // Fetch current game state
+  const fetchGameState = async () => {
     try {
-      // const response = await axios.get('http://localhost:8000/state');
-      const response = await axios.get('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/state');
+      const response = await axios.get(`${BASE_URL}/state`);
       setGameData(response.data);
     } catch (error) {
       console.error('Error fetching game state:', error);
+      alert('Failed to fetch game state. Please try again.');
     }
-  }
+  };
 
-  async function startGame() {
+  // Start a new game by sending player list, then fetch state
+  const startGame = async () => {
+    const filled = playerNames.map((n, i) => n.trim() || `Player ${i + 1}`);
+    console.log('Starting game with players:', filled);
     try {
-      await axios.get('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/start');
+      await axios.post(`${BASE_URL}/start`, { players: filled });
+      await fetchGameState();             // ensure state loads correctly
+      setSetupMode(false);                // switch to game view
       setShowdownData(null);
       setGameEnded(false);
-      await fetchGameState();
     } catch (error) {
       console.error('Error starting game:', error);
+      if (error.response && error.response.status === 405) {
+        alert('Start endpoint not allowed. Please check server route and method.');
+      } else {
+        alert('Failed to start game. Check console for details.');
+      }
     }
-  }
+  };
 
-  async function playerAction(name, action, amount = 0) {
+  // Player performs an action (fold, check, call, bet)
+  const playerAction = async (name, action, amount = 0) => {
     try {
-      const response = await axios.post('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/action', null, {
-        params: { name, action, amount }
-      });
-
+      const response = await axios.post(
+        `${BASE_URL}/action`,
+        null,
+        { params: { name, action, amount } }
+      );
       setGameData(response.data.state);
-
       if (response.data.showdown) {
-        await triggerShowdown();
+        setShowdownData(response.data.showdown);
+        setGameEnded(true);
       }
     } catch (error) {
       console.error('Error during player action:', error);
+      alert('Action failed. Please try again.');
     }
-  }
+  };
 
-  async function triggerShowdown() {
+  // Advance to next stage: flop, turn, river, or showdown
+  const nextStage = async () => {
     try {
-      const response = await axios.get('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/showdown');
-      setShowdownData(response.data);
-      setGameEnded(true);
+      const response = await axios.post(`${BASE_URL}/next_stage`);
+      const data = response.data;
+      if (data.showdown) {
+        setShowdownData(data.showdown);
+        setGameEnded(true);
+      } else {
+        setGameData(data);
+      }
     } catch (error) {
-      console.error('Error during showdown:', error);
+      console.error('Error advancing stage:', error);
+      alert('Failed to advance stage.');
     }
-  }
+  };
 
-  async function nextHand() {
+  // Start a new hand after showdown
+  const nextHand = async () => {
     try {
-      await axios.get('https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev/next_hand');
+      await axios.post(`${BASE_URL}/next_hand`);
+      await fetchGameState();
       setShowdownData(null);
       setGameEnded(false);
-      await fetchGameState();
     } catch (error) {
       console.error('Error starting next hand:', error);
+      alert('Failed to start next hand.');
     }
-  }
+  };
 
   return (
     <div style={{ fontFamily: 'Arial, sans-serif', padding: '30px', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center', color: '#333' }}>♠ Poker Game ♣</h1>
 
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-        <button onClick={startGame} style={{ padding: '10px 20px', fontWeight: 'bold' }}>
-          Start New Game
-        </button>
-      </div>
+      {setupMode ? (
+        // Setup form
+        <div style={{ textAlign: 'center' }}>
+          <h2>Setup Game</h2>
+          <label>Number of Players: </label>
+          <input
+            type="number"
+            min={2}
+            max={9}
+            value={playerCount}
+            onChange={e => {
+              const count = parseInt(e.target.value, 10);
+              setPlayerCount(count);
+              setPlayerNames(Array(count).fill(''));
+            }}
+          />
+          {playerNames.map((name, idx) => (
+            <div key={idx}>
+              <label>Player {idx + 1} Name: </label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => {
+                  const newNames = [...playerNames];
+                  newNames[idx] = e.target.value;
+                  setPlayerNames(newNames);
+                }}
+              />
+            </div>
+          ))}
+          <button style={{ marginTop: '15px' }} onClick={startGame}>
+            Start Game
+          </button>
+        </div>
+      ) : (
+        // Game control buttons
+        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+          <button onClick={startGame} style={{ padding: '10px 20px', fontWeight: 'bold' }}>
+            Start New Game
+          </button>
+          <button onClick={nextStage} style={{ marginLeft: '10px', padding: '10px 20px' }}>
+            Deal Next Stage
+          </button>
+        </div>
+      )}
 
-      {gameData && (
+      {gameData && !showdownData && (
+        // Main game view
         <div>
-          <h2 style={{ color: '#444' }}>Pot: <span style={{ color: '#008000' }}>{gameData.pot} BB</span></h2>
+          <h2 style={{ color: '#444' }}>
+            Pot: <span style={{ color: '#008000' }}>{gameData.pot} BB</span>
+          </h2>
 
           <div>
             <h2 style={{ borderBottom: '1px solid #ccc' }}>Players</h2>
             {gameData.players.map((player, idx) => {
-              const isCurrentTurn = gameData.current_turn === player.name && !player.folded && !gameEnded;
+              const isCurrent = gameData.current_turn === player.name && !player.folded && !gameEnded;
               return (
                 <div key={idx} style={{
-                  padding: '10px',
-                  marginBottom: '10px',
-                  backgroundColor: isCurrentTurn ? '#f0f8ff' : '#fafafa',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px'
+                  padding: '10px', marginBottom: '10px',
+                  backgroundColor: isCurrent ? '#f0f8ff' : '#fafafa',
+                  border: '1px solid #ddd', borderRadius: '8px'
                 }}>
                   <h3 style={{ margin: 0 }}>
                     {player.name} — <span style={{ color: '#000080' }}>{player.bb} BB</span>
-                    {player.is_small_blind && <span style={{ marginLeft: '10px', color: '#e67e22' }}>🟡 Small Blind</span>}
-                    {player.is_big_blind && <span style={{ marginLeft: '10px', color: '#2980b9' }}>🔵 Big Blind</span>}
+                    {player.is_small_blind && <span style={{ marginLeft: '10px' }}>🟡 SB</span>}
+                    {player.is_big_blind && <span style={{ marginLeft: '10px' }}>🔵 BB</span>}
                     {player.folded && <span style={{ marginLeft: '10px', color: '#aaa' }}>(Folded)</span>}
                   </h3>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', margin: '5px 0' }}>
-                    {player.hand.map((card, idx) => (
-                      <img key={idx} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />
+                    {player.hand.map((card, cidx) => (
+                      <img key={cidx} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />
                     ))}
                   </div>
 
-                  {isCurrentTurn && (
-                    <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                      <button onClick={() => playerAction(player.name, 'call')}>
-                        Call/Check
-                      </button>
+                  {isCurrent && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                      <button onClick={() => playerAction(player.name, 'call')}>Call</button>
+                      <button onClick={() => playerAction(player.name, 'check')}>Check</button>
                       <button onClick={() => {
-                        const amount = prompt('Enter bet amount (in BB):');
-                        if (amount) {
-                          const numAmount = parseFloat(amount);
-                          if (numAmount <= 0) {
-                            alert("❌ You cannot bet 0 or less BB.");
-                            return;
-                          }
-                          playerAction(player.name, 'bet', numAmount);
-                        }
-                        
-                      }}>
-                        Bet
-                      </button>
-                      <button onClick={() => playerAction(player.name, 'fold')} style={{ color: 'red' }}>
-                        Fold
-                      </button>
+                        const amt = prompt('Enter bet amount (BB):');
+                        const num = parseFloat(amt);
+                        if (!amt || isNaN(num)) return alert('Enter a valid number');
+                        playerAction(player.name, 'bet', num);
+                      }}>Bet</button>
+                      <button onClick={() => playerAction(player.name, 'fold')} style={{ color: 'red' }}>Fold</button>
                     </div>
                   )}
                 </div>
@@ -155,8 +198,8 @@ function GameBoard() {
             })}
           </div>
 
-          <div style={{ marginTop: '30px' }}>
-            <h2 style={{ textAlign: 'center' }}>Community Cards</h2>
+          <div style={{ marginTop: '30px', textAlign: 'center' }}>
+            <h2>Community Cards</h2>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
               {gameData.community_cards.map((card, idx) => (
                 <img key={idx} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />
@@ -167,55 +210,29 @@ function GameBoard() {
       )}
 
       {showdownData && (
-        <div style={{
-          marginTop: '40px',
-          padding: '20px',
-          border: '2px solid #444',
-          borderRadius: '12px',
-          backgroundColor: '#fdfdfd'
-        }}>
-          <h2 style={{ color: '#b30000', textAlign: 'center' }}>🏆 Final Showdown</h2>
-
+        // Showdown view
+        <div style={{ marginTop: '40px', padding: '20px', border: '2px solid #444', borderRadius: '12px', backgroundColor: '#fdfdfd' }}>
+          <h2 style={{ textAlign: 'center' }}>🏆 Final Showdown</h2>
           <div style={{ textAlign: 'center', marginBottom: '15px' }}>
             <strong>Board:</strong>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
               {showdownData.board.map((card, idx) => (
-                <img
-                  key={idx}
-                  src={getCardImage(card)}
-                  alt={card}
-                  style={{ width: '60px', height: '90px' }}
-                />
+                <img key={idx} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />
               ))}
             </div>
           </div>
-
-          <h3 style={{ textAlign: 'center' }}>Player Hands</h3>
+          <h3 style={{ textAlign: 'center' }}>Hands</h3>
           {showdownData.results.map((res, idx) => (
-            <div key={idx} style={{ marginBottom: '15px', textAlign: 'center' }}>
-              <strong>{res.name}</strong>: <i>{res.hand_name}</i>
+            <div key={idx} style={{ textAlign: 'center', marginBottom: '15px' }}>
+              <strong>{res.name}</strong> (<em>{res.hand_name}</em>)
               <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '8px' }}>
-                {res.hand.map((card, cidx) => (
-                  <img
-                    key={cidx}
-                    src={getCardImage(card)}
-                    alt={card}
-                    style={{ width: '60px', height: '90px' }}
-                  />
-                ))}
+                {res.hand.map((card, cidx) => <img key={cidx} src={getCardImage(card)} alt={card} style={{ width: '60px', height: '90px' }} />)}
               </div>
             </div>
           ))}
-
-          <h3 style={{ color: 'green', marginTop: '20px', textAlign: 'center' }}>
-            Winner(s): {showdownData.winners.join(', ')}
-          </h3>
-
+          <h3 style={{ textAlign: 'center' }}>Winner(s): {showdownData.winners.join(', ')}</h3>
           <div style={{ textAlign: 'center' }}>
-            <button
-              onClick={nextHand}
-              style={{ marginTop: '20px', padding: '12px 20px', backgroundColor: '#4CAF50', color: 'white', fontWeight: 'bold', borderRadius: '8px' }}
-            >
+            <button onClick={nextHand} style={{ padding: '12px 20px', backgroundColor: '#4CAF50', color: '#fff', borderRadius: '8px' }}>
               ➡️ Start Next Hand
             </button>
           </div>
