@@ -15,13 +15,14 @@ function GameBoard() {
   const [setupMode, setSetupMode] = useState(true);
   const [playerCount, setPlayerCount] = useState(2);
   const [playerNames, setPlayerNames] = useState(Array(2).fill(''));
+  const [sbAmount, setSbAmount] = useState(0.5);
+  const [bbAmount, setBbAmount] = useState(1.0);
   const [gameData, setGameData] = useState(null);
   const [showdownData, setShowdownData] = useState(null);
   const [gameEnded, setGameEnded] = useState(false);
 
   const BASE_URL = 'https://4350b21f-15a7-4d76-9abc-5d8e33ecccc8-00-a0ybye7nectp.riker.replit.dev';
 
-  // Fetch current game state
   const fetchGameState = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/state`);
@@ -32,27 +33,24 @@ function GameBoard() {
     }
   };
 
-  // Start a new game by sending player list, then fetch state
   const startGame = async () => {
     const filled = playerNames.map((n, i) => n.trim() || `Player ${i + 1}`);
-    console.log('Starting game with players:', filled);
     try {
-      await axios.post(`${BASE_URL}/start`, { players: filled });
-      await fetchGameState();             // ensure state loads correctly
-      setSetupMode(false);                // switch to game view
+      const response = await axios.post(`${BASE_URL}/start`, {
+        players: filled,
+        sb: sbAmount,
+        bb: bbAmount
+      });      
+      setGameData(response.data);
+      setSetupMode(false);
       setShowdownData(null);
       setGameEnded(false);
     } catch (error) {
       console.error('Error starting game:', error);
-      if (error.response && error.response.status === 405) {
-        alert('Start endpoint not allowed. Please check server route and method.');
-      } else {
-        alert('Failed to start game. Check console for details.');
-      }
+      alert('Failed to start game. Check console for details.');
     }
   };
 
-  // Player performs an action (fold, check, call, bet)
   const playerAction = async (name, action, amount = 0) => {
     try {
       const response = await axios.post(
@@ -71,7 +69,6 @@ function GameBoard() {
     }
   };
 
-  // Advance to next stage: flop, turn, river, or showdown
   const nextStage = async () => {
     try {
       const response = await axios.post(`${BASE_URL}/next_stage`);
@@ -88,7 +85,6 @@ function GameBoard() {
     }
   };
 
-  // Start a new hand after showdown
   const nextHand = async () => {
     try {
       await axios.post(`${BASE_URL}/next_hand`);
@@ -106,7 +102,6 @@ function GameBoard() {
       <h1 style={{ textAlign: 'center', color: '#333' }}>♠ Poker Game ♣</h1>
 
       {setupMode ? (
-        // Setup form
         <div style={{ textAlign: 'center' }}>
           <h2>Setup Game</h2>
           <label>Number of Players: </label>
@@ -121,6 +116,26 @@ function GameBoard() {
               setPlayerNames(Array(count).fill(''));
             }}
           />
+          
+          <div style={{ marginTop: '10px' }}>
+            <label>Small Blind (BB): </label>
+            <input
+              type="number"
+              step="0.1"
+              value={sbAmount}
+              onChange={e => setSbAmount(parseFloat(e.target.value))}
+            />
+          </div>
+          <div style={{ marginTop: '10px' }}>
+            <label>Big Blind (BB): </label>
+            <input
+              type="number"
+              step="0.1"
+              value={bbAmount}
+              onChange={e => setBbAmount(parseFloat(e.target.value))}
+            />
+          </div>
+
           {playerNames.map((name, idx) => (
             <div key={idx}>
               <label>Player {idx + 1} Name: </label>
@@ -140,19 +155,25 @@ function GameBoard() {
           </button>
         </div>
       ) : (
-        // Game control buttons
         <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-          <button onClick={startGame} style={{ padding: '10px 20px', fontWeight: 'bold' }}>
-            Start New Game
-          </button>
-          <button onClick={nextStage} style={{ marginLeft: '10px', padding: '10px 20px' }}>
-            Deal Next Stage
+          <button
+            onClick={() => {
+              // Return to initial setup
+              setSetupMode(true);
+              setPlayerCount(2);
+              setPlayerNames(Array(2).fill(''));
+              setGameData(null);
+              setShowdownData(null);
+              setGameEnded(false);
+            }}
+            style={{ padding: '10px 20px', fontWeight: 'bold' }}
+          >
+            New Game Setup
           </button>
         </div>
       )}
 
       {gameData && !showdownData && (
-        // Main game view
         <div>
           <h2 style={{ color: '#444' }}>
             Pot: <span style={{ color: '#008000' }}>{gameData.pot} BB</span>
@@ -210,7 +231,6 @@ function GameBoard() {
       )}
 
       {showdownData && (
-        // Showdown view
         <div style={{ marginTop: '40px', padding: '20px', border: '2px solid #444', borderRadius: '12px', backgroundColor: '#fdfdfd' }}>
           <h2 style={{ textAlign: 'center' }}>🏆 Final Showdown</h2>
           <div style={{ textAlign: 'center', marginBottom: '15px' }}>
