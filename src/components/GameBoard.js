@@ -52,6 +52,7 @@ function GameBoard() {
   };
 
   const playerAction = async (name, action, amount = 0) => {
+    console.log(`playerAction() →`, { name, action, amount });
     try {
       const response = await axios.post(
         `${BASE_URL}/action`,
@@ -216,7 +217,12 @@ function GameBoard() {
 
                   {isCurrent && (
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                      <button onClick={() => playerAction(player.name, 'call')}>Call</button>
+                      <button onClick={() => {
+                        console.log('Call button clicked for', player.name);
+                        playerAction(player.name, 'call');
+                      }}>
+                        Call
+                      </button>
                       <button onClick={() => playerAction(player.name, 'check')}>Check</button>
                       <button onClick={() => {
                         const amt = prompt('Enter bet amount (BB):');
