@@ -116,25 +116,38 @@ function GameBoard() {
               setPlayerNames(Array(count).fill(''));
             }}
           />
-          
-          <div style={{ marginTop: '10px' }}>
-            <label>Small Blind (BB): </label>
+
+        {/* Blinds setup */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '40px',
+            alignItems: 'flex-start',
+            marginTop: '15px'
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <label style={{ marginBottom: '4px' }}>Small Blind (BB):</label>
             <input
               type="number"
               step="0.1"
               value={sbAmount}
               onChange={e => setSbAmount(parseFloat(e.target.value))}
+              style={{ width: '100px', padding: '4px' }}
             />
           </div>
-          <div style={{ marginTop: '10px' }}>
-            <label>Big Blind (BB): </label>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <label style={{ marginBottom: '4px' }}>Big Blind (BB):</label>
             <input
               type="number"
               step="0.1"
               value={bbAmount}
               onChange={e => setBbAmount(parseFloat(e.target.value))}
+              style={{ width: '100px', padding: '4px' }}
             />
           </div>
+        </div>
 
           {playerNames.map((name, idx) => (
             <div key={idx}>
